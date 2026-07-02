@@ -4,10 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>A More Perfect Union</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --off-white:#f7f4ea;
+    --off-white:#ffffff;
     --black:#111111;
     --gold:#c9a227;
     --gold-light:#e8d27f;
@@ -16,6 +19,8 @@
     --card-bg:#fffdf8;
     --green:#1e6b3a;
     --red:#a33a2f;
+    --plum:#4a3350;
+    --plum-light:#7a5f82;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -28,6 +33,7 @@
     overflow-x:hidden;
   }
   .serif{font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;}
+  .display-serif{font-family:"Playfair Display",Georgia,serif;font-weight:900;}
   #app{
     max-width:480px;
     margin:0 auto;
@@ -52,9 +58,11 @@
     z-index:20;
   }
   .wordmark{
-    font-family:Georgia,"Iowan Old Style",serif;
-    font-weight:700;
-    font-size:15px;
+    font-family:"Playfair Display",Georgia,serif;
+    font-weight:900;
+    font-style:italic;
+    color:var(--plum);
+    font-size:16px;
     letter-spacing:0.01em;
     line-height:1.15;
   }
@@ -105,10 +113,14 @@
     width:calc(100% - 32px);
     max-width:380px;
     aspect-ratio:3/4.2;
-    background:var(--card-bg);
-    border:1px solid rgba(0,0,0,0.12);
-    border-radius:6px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.12);
+    background:
+      radial-gradient(ellipse at top, rgba(255,255,255,0.5), transparent 65%),
+      linear-gradient(180deg, #f4e9c9, #ecdca8);
+    border:none;
+    border-radius:3px;
+    box-shadow:
+      0 10px 30px rgba(74,51,80,0.18),
+      inset 0 0 40px rgba(139,105,45,0.16);
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -120,6 +132,18 @@
     will-change:transform;
     transition:transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s;
   }
+  .card::before,
+  .card::after{
+    content:'';
+    position:absolute;
+    left:-10px;right:-10px;
+    height:20px;
+    background:linear-gradient(180deg, #e8d59f, #b9944f 45%, #e0cc93);
+    border-radius:12px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.28);
+  }
+  .card::before{top:-10px;}
+  .card::after{bottom:-10px;}
   .card .article-label{
     font-size:10px;
     letter-spacing:0.18em;
@@ -132,15 +156,18 @@
     line-height:1.36;
     font-weight:500;
   }
-  .card .source-tag{
-    margin-top:22px;
-    font-size:10px;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    color:var(--gold);
-    font-family:-apple-system,sans-serif;
+  .card .rules-title{
+    font-size:24px;
     font-weight:700;
+    margin-bottom:20px;
   }
+  .card .rules-text p{
+    font-size:15px;
+    line-height:1.5;
+    color:var(--black);
+    margin:0 0 12px;
+  }
+  .card .rules-text p:last-child{margin-bottom:0;}
   .card .stamp{
     position:absolute;
     top:26px;
@@ -276,16 +303,41 @@
     margin-bottom:26px;
     letter-spacing:0.03em;
   }
-  .ranked-list{list-style:none;margin:0 0 34px;padding:0;}
+  .scroll-wrapper{
+    position:relative;
+    margin:38px 0 46px;
+    padding:36px 22px 30px;
+    background:
+      radial-gradient(ellipse at top, rgba(255,255,255,0.5), transparent 65%),
+      linear-gradient(180deg, #f4e9c9, #ecdca8);
+    box-shadow:
+      0 14px 34px rgba(74,51,80,0.22),
+      inset 0 0 50px rgba(139,105,45,0.16);
+    border-radius:3px;
+  }
+  .scroll-wrapper::before,
+  .scroll-wrapper::after{
+    content:'';
+    position:absolute;
+    left:-12px;right:-12px;
+    height:24px;
+    background:linear-gradient(180deg, #e8d59f, #b9944f 45%, #e0cc93);
+    border-radius:14px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.28);
+  }
+  .scroll-wrapper::before{top:-12px;}
+  .scroll-wrapper::after{bottom:-12px;}
+  .ranked-list{list-style:none;margin:0;padding:0;position:relative;}
   .ranked-list li{
     display:flex;gap:12px;align-items:flex-start;
     padding:12px 0;
-    border-bottom:1px solid rgba(0,0,0,0.08);
+    border-bottom:1px solid rgba(90,71,18,0.18);
   }
+  .ranked-list li:last-child{border-bottom:none;}
   .ranked-list .rank{
-    font-family:Georgia,serif;
-    font-size:18px;font-weight:700;color:var(--gold);
-    width:22px;flex-shrink:0;
+    font-family:"Playfair Display",Georgia,serif;
+    font-size:19px;font-weight:900;font-style:italic;color:var(--plum);
+    width:24px;flex-shrink:0;
   }
   .ranked-list .law-body{flex:1;}
   .ranked-list .law-body .txt{font-family:Georgia,serif;font-size:15px;line-height:1.4;}
@@ -303,42 +355,6 @@
     border-radius:3px;
     margin-left:6px;
   }
-
-  .columns-head{
-    text-align:center;
-    font-family:Georgia,serif;
-    font-size:20px;
-    margin:36px 0 2px;
-  }
-  .columns-sub{text-align:center;color:var(--gray);font-size:11px;margin-bottom:18px;}
-  .constitutions{display:flex;gap:12px;}
-  .constitution-col{
-    flex:1;
-    min-width:0;
-    background:var(--card-bg);
-    border:1px solid rgba(0,0,0,0.1);
-    border-radius:8px;
-    padding:14px 12px;
-  }
-  .constitution-col h4{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    margin:0 0 12px;
-    text-align:center;
-    padding-bottom:8px;
-    border-bottom:2px solid var(--black);
-  }
-  .constitution-col.plutocrat h4{border-bottom-color:var(--gold);color:var(--gold-dark);}
-  .constitution-col ol{margin:0;padding-left:18px;}
-  .constitution-col li{
-    font-family:Georgia,serif;
-    font-size:12.5px;
-    line-height:1.4;
-    margin-bottom:11px;
-  }
-  .constitution-col li .secured-tag{display:block;width:fit-content;margin:3px 0 0;}
-  .constitution-col .vote-meta{display:block;font-size:10px;color:var(--gray);font-family:-apple-system,sans-serif;margin-top:2px;}
 
   .cta-row{
     text-align:center;
@@ -432,7 +448,6 @@
 
   @media (max-width:340px){
     .card .law-text{font-size:19px;}
-    .constitution-col li{font-size:11.5px;}
   }
 </style>
 </head>
@@ -440,10 +455,10 @@
 
 <div id="app">
   <header>
-    <div class="wordmark">A More Perfect Union<small>Inanna Gallery &middot; Jul 3, 2026</small></div>
+    <div class="wordmark">A More Perfect Union</div>
     <div class="header-btns">
-      <a class="pill" id="btn-submit" href="#">Submit $1</a>
-      <a class="pill gold" id="btn-secure" href="#">Secure $10</a>
+      <a class="pill" id="btn-submit" href="#">Submit a Law $1</a>
+      <a class="pill gold" id="btn-secure" href="#">Guarantee a Law $10</a>
     </div>
   </header>
 
@@ -455,7 +470,7 @@
 <button id="leaderboard-toggle">&#127942;&nbsp; Top 10 &mdash; live</button>
 <div id="leaderboard-drawer">
   <div class="drawer-head">
-    <h3 class="serif">Top 10 Right Now</h3>
+    <h3 class="display-serif">Top 10 Right Now</h3>
     <button id="leaderboard-close" aria-label="Close">&times;</button>
   </div>
   <div id="leaderboard-list"></div>
@@ -471,6 +486,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_6pDzyPnKI8sZ4wgC3Hg2RQ_GsSfbecB";
 const STRIPE_SUBMIT_LINK = "https://buy.stripe.com/5kQ00j2eogD81at0CJ4ko01";
 const STRIPE_SECURE_LINK = "https://buy.stripe.com/6oU4gz9GQev09GZ5X34ko02";
 const LAW_MAX_LEN = 220;
+const RULES_CARD = {
+  id: 'rules',
+  isRules: true,
+  title: 'Constitution Builder',
+  rules: [
+    'Swipe right to vote <strong>yes</strong> on a law.',
+    'Swipe left to vote <strong>no</strong>.',
+    'Pay $1 to submit a law.',
+    'Pay $10 to secure a law.'
+  ]
+};
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -537,7 +563,7 @@ function renderForm(kind){
   mainEl.innerHTML = `
     <div id="form-screen" class="${isSecure ? 'secure' : ''}">
       <div class="form-icon">${isSecure ? '&#128081;' : '&#9997;&#65039;'}</div>
-      <h1 class="serif">${isSecure ? 'Secure Your Law' : 'Submit Your Law'}</h1>
+      <h1 class="display-serif">${isSecure ? 'Secure Your Law' : 'Submit Your Law'}</h1>
       <p class="desc">${isSecure
         ? 'Payment received. Write your law below &mdash; it goes straight into the Plutocrat&rsquo;s Constitution, marked &ldquo;secured,&rdquo; bypassing the vote entirely.'
         : 'Payment received. Write your law below &mdash; it enters the moderation queue and, once approved, joins the swipe stack.'}</p>
@@ -623,7 +649,7 @@ async function loadDeck(){
     .order('id', { ascending:true });
 
   if(error){
-    stage.innerHTML = '<div class="empty-deck"><h2 class="serif">Couldn’t load laws</h2><p>' + escapeHtml(error.message) + '</p></div>';
+    stage.innerHTML = '<div class="empty-deck"><h2 class="display-serif">Couldn’t load laws</h2><p>' + escapeHtml(error.message) + '</p></div>';
     return;
   }
 
@@ -632,18 +658,22 @@ async function loadDeck(){
   deckIndex = 0;
   isSwiping = false;
 
-  if(deck.length === 0){
-    showEndOfDeck();
-  }else{
-    renderCard();
-  }
+  // The rules card is shown fresh every time the deck (re)loads. It's
+  // synthetic — never touches swipedIds or the database.
+  deck.unshift(RULES_CARD);
+
+  renderCard();
 }
 
 function updateProgress(){
   const el = document.getElementById('deck-progress');
   if(!el) return;
-  if(deck.length === 0){ el.textContent = ''; return; }
-  el.textContent = Math.min(deckIndex+1, deck.length) + ' of ' + deck.length;
+  const law = deck[deckIndex];
+  if(!law || law.isRules){ el.textContent = ''; return; }
+  const realTotal = deck.filter(l => !l.isRules).length;
+  const realIndex = deck.slice(0, deckIndex).filter(l => !l.isRules).length;
+  if(realTotal === 0){ el.textContent = ''; return; }
+  el.textContent = Math.min(realIndex+1, realTotal) + ' of ' + realTotal;
 }
 
 function renderCard(){
@@ -656,14 +686,21 @@ function renderCard(){
   const law = deck[deckIndex];
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = `
-    <div class="stamp pass">Pass</div>
-    <div class="stamp support">Support</div>
-    <div class="article-label">Proposed Article</div>
-    <div class="law-text serif">${escapeHtml(law.text)}</div>
-    <div class="source-tag">${escapeHtml(law.source || 'submitted')}</div>
-    ${!hintShown ? '<div class="swipe-hint">swipe to vote<span class="arrows">&larr;&nbsp;&nbsp;&rarr;</span></div>' : ''}
-  `;
+  if(law.isRules){
+    card.innerHTML = `
+      <div class="rules-title display-serif">${escapeHtml(law.title)}</div>
+      <div class="rules-text">${law.rules.map(r => `<p>${r}</p>`).join('')}</div>
+      ${!hintShown ? '<div class="swipe-hint">swipe to begin<span class="arrows">&larr;&nbsp;&nbsp;&rarr;</span></div>' : ''}
+    `;
+  }else{
+    card.innerHTML = `
+      <div class="stamp pass">Pass</div>
+      <div class="stamp support">Support</div>
+      <div class="article-label">Proposed Article</div>
+      <div class="law-text serif">${escapeHtml(law.text)}</div>
+      ${!hintShown ? '<div class="swipe-hint">swipe to vote<span class="arrows">&larr;&nbsp;&nbsp;&rarr;</span></div>' : ''}
+    `;
+  }
   stage.appendChild(card);
   attachDrag(card, law.id);
   updateProgress();
@@ -736,12 +773,15 @@ function finishSwipe(direction, card, lawId){
   card.style.transform = `translate(${flyX}px, -40px) rotate(${direction==='right'?18:-18}deg)`;
   card.style.opacity = '0';
 
-  addSwipedId(lawId);
-
-  if(direction === 'right'){
-    sb.rpc('increment_free_vote', { law_id: lawId }).then(({error})=>{
-      if(error) console.error('vote error', error);
-    });
+  // The rules card is synthetic — dismissing it never touches swipedIds
+  // or casts a vote, regardless of which way it's swiped.
+  if(lawId !== 'rules'){
+    addSwipedId(lawId);
+    if(direction === 'right'){
+      sb.rpc('increment_free_vote', { law_id: lawId }).then(({error})=>{
+        if(error) console.error('vote error', error);
+      });
+    }
   }
 
   setTimeout(()=>{
@@ -755,7 +795,7 @@ function showEndOfDeck(){
   const stage = document.getElementById('stage');
   stage.innerHTML = `
     <div class="empty-deck">
-      <h2 class="serif">You&rsquo;ve seen every law</h2>
+      <h2 class="display-serif">You&rsquo;ve seen every law</h2>
       <p>See how the vote is shaping up so far.</p>
       <button class="pill" id="btn-results" style="padding:10px 20px;font-size:13px;">View Results</button>
     </div>
@@ -824,60 +864,39 @@ async function renderResultsScreen(){
   }
 
   const laws = allLaws || [];
-  const unsecured = laws.filter(l => !l.secured);
+
+  // Secured ($10) laws are guaranteed a spot no matter their vote count.
+  // Everything else fills the remaining slots by pure right-swipe rank.
+  // Ties broken by id (insertion order) since all seeded rows share one
+  // created_at timestamp.
   const secured = laws.filter(l => l.secured).sort((a,b)=> a.id - b.id);
-
-  // "Ranked by right swipes" = free_votes, everywhere. Ties broken by id
-  // (insertion order) since all seeded rows share one created_at timestamp.
-  const top10 = [...laws].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, 10);
-
-  const peoples = [...unsecured].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, 10);
-
+  const unsecured = laws.filter(l => !l.secured).sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id);
   const remainingSlots = Math.max(0, 10 - secured.length);
-  const plutocratRanked = [...unsecured].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, remainingSlots);
-  const plutocrat = [...secured, ...plutocratRanked];
+  const finalConstitution = [...secured, ...unsecured.slice(0, remainingSlots)];
 
   function rankedItem(l, i){
     return `<li>
       <div class="rank">${i+1}</div>
       <div class="law-body">
         <div class="txt serif">${l.secured ? crown() : ''}${escapeHtml(l.text)}</div>
-        <div class="meta">${l.free_votes} vote${l.free_votes===1?'':'s'}${l.secured ? '<span class="secured-tag">Secured</span>' : ''}</div>
+        <div class="meta">${l.secured ? '<span class="secured-tag">Secured</span>' : `${l.free_votes} vote${l.free_votes===1?'':'s'}`}</div>
       </div>
     </li>`;
-  }
-  function colItem(l){
-    return `<li>${l.secured ? crown() : ''}${escapeHtml(l.text)}${
-      l.secured
-        ? '<span class="secured-tag">Secured</span>'
-        : `<span class="vote-meta">${l.free_votes} vote${l.free_votes===1?'':'s'}</span>`
-    }</li>`;
   }
 
   mainEl.innerHTML = `
     <div id="results">
-      <h1 class="serif">The Top 10 Laws</h1>
-      <div class="subtitle">Ranked by right swipes</div>
-      <ol class="ranked-list">${top10.length ? top10.map(rankedItem).join('') : '<li style="color:var(--gray);border:none;">No votes yet.</li>'}</ol>
-
-      <div class="columns-head serif">Two Constitutions</div>
-      <div class="columns-sub">One vote, one voice &mdash; or one that was bought.</div>
-      <div class="constitutions">
-        <div class="constitution-col peoples">
-          <h4>The People&rsquo;s Constitution</h4>
-          <ol>${peoples.length ? peoples.map(colItem).join('') : '<li style="color:var(--gray)">No votes yet</li>'}</ol>
-        </div>
-        <div class="constitution-col plutocrat">
-          <h4>The Plutocrat&rsquo;s Constitution</h4>
-          <ol>${plutocrat.length ? plutocrat.map(colItem).join('') : '<li style="color:var(--gray)">No laws yet</li>'}</ol>
-        </div>
+      <h1 class="display-serif">The Constitution</h1>
+      <div class="subtitle">Secured laws guaranteed a spot &mdash; everything else ranked by right swipes</div>
+      <div class="scroll-wrapper">
+        <ol class="ranked-list">${finalConstitution.length ? finalConstitution.map(rankedItem).join('') : '<li style="color:var(--gray);border:none;">No votes yet.</li>'}</ol>
       </div>
 
       <div class="cta-row">
         <p>Want your law in the running?</p>
         <div class="header-btns">
-          <a class="pill" href="${STRIPE_SUBMIT_LINK}">Propose a Law &mdash; $1</a>
-          <a class="pill gold" href="${STRIPE_SECURE_LINK}">Secure a Spot &mdash; $10</a>
+          <a class="pill" href="${STRIPE_SUBMIT_LINK}">Submit a Law &mdash; $1</a>
+          <a class="pill gold" href="${STRIPE_SECURE_LINK}">Guarantee a Law &mdash; $10</a>
         </div>
       </div>
 
