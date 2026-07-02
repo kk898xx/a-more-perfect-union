@@ -110,8 +110,10 @@
   }
   .card{
     position:absolute;
-    width:calc(100% - 32px);
-    max-width:380px;
+    width:auto;
+    max-width:calc(100% - 32px);
+    height:min(50vh, 460px);
+    height:min(50dvh, 460px);
     aspect-ratio:3/4.2;
     background:
       radial-gradient(ellipse at top, rgba(255,255,255,0.5), transparent 65%),
@@ -566,10 +568,10 @@ function renderForm(kind){
       <h1 class="display-serif">${isSecure ? 'Secure Your Law' : 'Submit Your Law'}</h1>
       <p class="desc">${isSecure
         ? 'Payment received. Write your law below &mdash; it goes straight into the Plutocrat&rsquo;s Constitution, marked &ldquo;secured,&rdquo; bypassing the vote entirely.'
-        : 'Payment received. Write your law below &mdash; it enters the moderation queue and, once approved, joins the swipe stack.'}</p>
+        : 'Payment received. Write your law below &mdash; it joins the swipe stack immediately for people to vote on.'}</p>
       <textarea id="law-input" maxlength="${LAW_MAX_LEN}" placeholder="e.g. Every public building must have a garden" autofocus></textarea>
       <div class="char-count"><span id="char-count">0</span> / ${LAW_MAX_LEN}</div>
-      <button class="submit-btn" id="form-submit-btn">${isSecure ? 'Secure This Law' : 'Submit for Approval'}</button>
+      <button class="submit-btn" id="form-submit-btn">${isSecure ? 'Secure This Law' : 'Submit This Law'}</button>
       <div class="status-msg" id="form-status"></div>
     </div>
   `;
@@ -593,9 +595,11 @@ function renderForm(kind){
         if(error) throw error;
         statusEl.textContent = 'Secured. Your law is now in the Plutocrat’s Constitution.';
       }else{
-        const { error } = await sb.from('submissions').insert({ text, approved:false });
+        const { error } = await sb.from('laws').insert({
+          text, source:'submitted', approved:true, secured:false
+        });
         if(error) throw error;
-        statusEl.textContent = 'Submitted. It will appear in the swipe stack once approved.';
+        statusEl.textContent = 'Submitted. It’s in the swipe stack now.';
       }
       statusEl.classList.add('success');
       input.disabled = true;
