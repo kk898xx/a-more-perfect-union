@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>A More Perfect Union</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --off-white:#f7f4ea;
+    --black:#111111;
+    --gold:#c9a227;
+    --gold-light:#e8d27f;
+    --gold-dark:#5a4712;
+    --gray:#6b6b64;
+    --card-bg:#fffdf8;
+    --green:#1e6b3a;
+    --red:#a33a2f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--off-white);
+    color:var(--black);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
+  }
+  .serif{font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;}
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    padding:14px 18px 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+    position:sticky;
+    top:0;
+    background:var(--off-white);
+    z-index:20;
+  }
+  .wordmark{
+    font-family:Georgia,"Iowan Old Style",serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.01em;
+    line-height:1.15;
+  }
+  .wordmark small{
+    display:block;
+    font-family:-apple-system,sans-serif;
+    font-weight:400;
+    font-size:9px;
+    letter-spacing:0.13em;
+    text-transform:uppercase;
+    color:var(--gray);
+    margin-top:2px;
+  }
+  .header-btns{display:flex;gap:6px;flex-shrink:0;}
+  .pill{
+    display:inline-block;
+    border:1px solid var(--black);
+    background:transparent;
+    border-radius:999px;
+    padding:7px 11px;
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+    color:var(--black);
+    text-decoration:none;
+  }
+  .pill.gold{
+    border-color:var(--gold);
+    color:var(--gold-dark);
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+  }
+
+  main{flex:1;position:relative;display:flex;flex-direction:column;}
+
+  /* ---------- SWIPE STAGE ---------- */
+  #stage{
+    position:relative;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 16px 6px;
+    min-height:58vh;
+  }
+  .card{
+    position:absolute;
+    width:calc(100% - 32px);
+    max-width:380px;
+    aspect-ratio:3/4.2;
+    background:var(--card-bg);
+    border:1px solid rgba(0,0,0,0.12);
+    border-radius:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.12);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:34px 26px;
+    text-align:center;
+    user-select:none;
+    touch-action:none;
+    will-change:transform;
+    transition:transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s;
+  }
+  .card .article-label{
+    font-size:10px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gray);
+    margin-bottom:18px;
+  }
+  .card .law-text{
+    font-size:23px;
+    line-height:1.36;
+    font-weight:500;
+  }
+  .card .source-tag{
+    margin-top:22px;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-family:-apple-system,sans-serif;
+    font-weight:700;
+  }
+  .card .stamp{
+    position:absolute;
+    top:26px;
+    padding:5px 14px;
+    border:2.5px solid;
+    border-radius:4px;
+    font-family:-apple-system,sans-serif;
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    opacity:0;
+    transform:rotate(-12deg);
+  }
+  .card .stamp.support{right:20px;color:var(--green);border-color:var(--green);transform:rotate(10deg);}
+  .card .stamp.pass{left:20px;color:var(--red);border-color:var(--red);transform:rotate(-10deg);}
+
+  .swipe-hint{
+    position:absolute;
+    bottom:16px;
+    left:0;right:0;
+    text-align:center;
+    font-size:11px;
+    color:var(--gray);
+    letter-spacing:0.04em;
+    pointer-events:none;
+    animation:fadeInOut 3.2s ease-in-out infinite;
+  }
+  @keyframes fadeInOut{0%,100%{opacity:0.3;}50%{opacity:0.9;}}
+  .swipe-hint .arrows{font-size:15px;letter-spacing:8px;display:block;margin-top:4px;}
+
+  .btn-row{
+    display:flex;
+    gap:28px;
+    justify-content:center;
+    padding:6px 16px 20px;
+  }
+  .round-btn{
+    width:56px;height:56px;
+    border-radius:50%;
+    border:1.5px solid var(--black);
+    background:var(--card-bg);
+    font-size:22px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  }
+  .round-btn.pass{color:var(--red);border-color:var(--red);}
+  .round-btn.support{color:var(--green);border-color:var(--green);}
+
+  .deck-progress{
+    text-align:center;
+    font-size:11px;
+    color:var(--gray);
+    padding-top:10px;
+    letter-spacing:0.04em;
+  }
+
+  .empty-deck{text-align:center;padding:60px 24px;}
+  .empty-deck h2{font-family:Georgia,serif;font-size:22px;margin-bottom:10px;}
+  .empty-deck p{color:var(--gray);font-size:13px;margin-bottom:22px;line-height:1.5;}
+
+  /* ---------- LEADERBOARD DRAWER ---------- */
+  #leaderboard-toggle{
+    position:fixed;
+    bottom:16px;
+    left:16px;right:16px;
+    z-index:30;
+    background:var(--black);
+    color:var(--off-white);
+    border:none;
+    border-radius:999px;
+    padding:12px 16px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    box-shadow:0 6px 16px rgba(0,0,0,0.25);
+    cursor:pointer;
+    max-width:448px;
+    margin:0 auto;
+  }
+  #leaderboard-drawer{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    max-width:480px;
+    margin:0 auto;
+    background:var(--card-bg);
+    border-top:1px solid rgba(0,0,0,0.15);
+    border-radius:16px 16px 0 0;
+    box-shadow:0 -8px 30px rgba(0,0,0,0.18);
+    transform:translateY(100%);
+    transition:transform 0.3s ease;
+    z-index:40;
+    max-height:70vh;
+    display:flex;
+    flex-direction:column;
+  }
+  #leaderboard-drawer.open{transform:translateY(0);}
+  #leaderboard-drawer .drawer-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px 8px;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  #leaderboard-drawer .drawer-head h3{
+    font-family:Georgia,serif;font-size:16px;margin:0;
+  }
+  #leaderboard-drawer .drawer-head button{
+    background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray);line-height:1;
+  }
+  #leaderboard-list{overflow-y:auto;padding:6px 18px 24px;}
+  .lb-row{
+    display:flex;align-items:baseline;gap:10px;
+    padding:9px 0;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+    font-size:13px;
+  }
+  .lb-rank{font-weight:700;color:var(--gold);width:18px;flex-shrink:0;}
+  .lb-text{flex:1;font-family:Georgia,serif;}
+  .lb-count{color:var(--gray);font-size:12px;white-space:nowrap;}
+
+  /* ---------- RESULTS ---------- */
+  #results{padding:22px 18px 100px;}
+  #results h1{
+    font-family:Georgia,serif;
+    text-align:center;
+    font-size:26px;
+    margin:6px 0 4px;
+  }
+  #results .subtitle{
+    text-align:center;
+    color:var(--gray);
+    font-size:12px;
+    margin-bottom:26px;
+    letter-spacing:0.03em;
+  }
+  .ranked-list{list-style:none;margin:0 0 34px;padding:0;}
+  .ranked-list li{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:12px 0;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  .ranked-list .rank{
+    font-family:Georgia,serif;
+    font-size:18px;font-weight:700;color:var(--gold);
+    width:22px;flex-shrink:0;
+  }
+  .ranked-list .law-body{flex:1;}
+  .ranked-list .law-body .txt{font-family:Georgia,serif;font-size:15px;line-height:1.4;}
+  .ranked-list .law-body .meta{font-size:11px;color:var(--gray);margin-top:3px;}
+  .crown{margin-right:4px;}
+  .secured-tag{
+    display:inline-block;
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold-dark);
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+    padding:2px 7px;
+    border-radius:3px;
+    margin-left:6px;
+  }
+
+  .columns-head{
+    text-align:center;
+    font-family:Georgia,serif;
+    font-size:20px;
+    margin:36px 0 2px;
+  }
+  .columns-sub{text-align:center;color:var(--gray);font-size:11px;margin-bottom:18px;}
+  .constitutions{display:flex;gap:12px;}
+  .constitution-col{
+    flex:1;
+    min-width:0;
+    background:var(--card-bg);
+    border:1px solid rgba(0,0,0,0.1);
+    border-radius:8px;
+    padding:14px 12px;
+  }
+  .constitution-col h4{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin:0 0 12px;
+    text-align:center;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--black);
+  }
+  .constitution-col.plutocrat h4{border-bottom-color:var(--gold);color:var(--gold-dark);}
+  .constitution-col ol{margin:0;padding-left:18px;}
+  .constitution-col li{
+    font-family:Georgia,serif;
+    font-size:12.5px;
+    line-height:1.4;
+    margin-bottom:11px;
+  }
+  .constitution-col li .secured-tag{display:block;width:fit-content;margin:3px 0 0;}
+  .constitution-col .vote-meta{display:block;font-size:10px;color:var(--gray);font-family:-apple-system,sans-serif;margin-top:2px;}
+
+  .cta-row{
+    text-align:center;
+    margin-top:32px;
+    padding:16px;
+    border:1px dashed rgba(0,0,0,0.2);
+    border-radius:8px;
+  }
+  .cta-row p{font-size:12px;color:var(--gray);margin:0 0 10px;}
+  .cta-row .header-btns{justify-content:center;display:inline-flex;}
+
+  .reset-row{text-align:center;margin-top:26px;}
+  .link-btn{
+    background:none;border:none;color:var(--black);
+    font-size:12px;text-decoration:underline;cursor:pointer;
+    padding:10px;
+  }
+
+  /* ---------- FORMS ---------- */
+  #form-screen{padding:56px 24px;text-align:center;}
+  #form-screen .form-icon{font-size:32px;margin-bottom:10px;}
+  #form-screen h1{font-family:Georgia,serif;font-size:24px;margin:0 0 8px;}
+  #form-screen p.desc{color:var(--gray);font-size:13px;margin-bottom:24px;line-height:1.55;}
+  #form-screen textarea{
+    width:100%;
+    min-height:120px;
+    border:1.5px solid var(--black);
+    border-radius:6px;
+    padding:14px;
+    font-family:Georgia,serif;
+    font-size:16px;
+    resize:vertical;
+    background:var(--card-bg);
+  }
+  #form-screen textarea:focus{outline:2px solid var(--gold);}
+  #form-screen .char-count{text-align:right;font-size:10px;color:var(--gray);margin-top:4px;}
+  #form-screen .submit-btn{
+    margin-top:14px;
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:6px;
+    background:var(--black);
+    color:var(--off-white);
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    cursor:pointer;
+  }
+  #form-screen .submit-btn:disabled{opacity:0.5;}
+  #form-screen.secure .submit-btn{
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+    color:#3a2e0d;
+  }
+  #form-screen .status-msg{margin-top:16px;font-size:13px;color:var(--red);}
+  #form-screen .status-msg.success{color:var(--green);font-weight:600;}
+  #form-screen .continue-btn{
+    display:inline-block;
+    margin-top:20px;
+    font-size:12px;
+    text-decoration:underline;
+    color:var(--black);
+    cursor:pointer;
+    background:none;border:none;
+  }
+
+  .toast{
+    position:fixed;
+    top:70px;left:50%;
+    transform:translateX(-50%) translateY(-10px);
+    background:var(--black);
+    color:var(--off-white);
+    padding:9px 18px;
+    border-radius:999px;
+    font-size:12px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s, transform 0.25s;
+    z-index:100;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  footer{
+    text-align:center;
+    font-size:10px;
+    color:var(--gray);
+    padding:14px 0 76px;
+    letter-spacing:0.05em;
+  }
+
+  @media (max-width:340px){
+    .card .law-text{font-size:19px;}
+    .constitution-col li{font-size:11.5px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="wordmark">A More Perfect Union<small>Inanna Gallery &middot; Jul 3, 2026</small></div>
+    <div class="header-btns">
+      <a class="pill" id="btn-submit" href="#">Submit $1</a>
+      <a class="pill gold" id="btn-secure" href="#">Secure $10</a>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <footer>swipe left to pass &middot; swipe right to support</footer>
+</div>
+
+<button id="leaderboard-toggle">&#127942;&nbsp; Top 10 &mdash; live</button>
+<div id="leaderboard-drawer">
+  <div class="drawer-head">
+    <h3 class="serif">Top 10 Right Now</h3>
+    <button id="leaderboard-close" aria-label="Close">&times;</button>
+  </div>
+  <div id="leaderboard-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+const SUPABASE_URL = "https://uiicjupdfdrjihcpnnuj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_6pDzyPnKI8sZ4wgC3Hg2RQ_GsSfbecB";
+const STRIPE_SUBMIT_LINK = "https://buy.stripe.com/5kQ00j2eogD81at0CJ4ko01";
+const STRIPE_SECURE_LINK = "https://buy.stripe.com/6oU4gz9GQev09GZ5X34ko02";
+const LAW_MAX_LEN = 220;
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const mainEl = document.getElementById('main');
+const toastEl = document.getElementById('toast');
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function crown(){ return '<span class="crown" aria-label="secured">&#128081;</span>'; }
+
+/* ---------------- SESSION SWIPE TRACKING (per device, localStorage) ---------------- */
+const SWIPED_KEY = 'amp_swiped_ids_v2';
+function getSwipedIds(){
+  try{ return new Set(JSON.parse(localStorage.getItem(SWIPED_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function addSwipedId(id){
+  const set = getSwipedIds();
+  set.add(id);
+  localStorage.setItem(SWIPED_KEY, JSON.stringify(Array.from(set)));
+}
+
+/* ---------------- ROUTING ---------------- */
+function currentAction(){
+  return new URLSearchParams(window.location.search).get('action');
+}
+function clearActionParam(){
+  const url = new URL(window.location.href);
+  url.searchParams.delete('action');
+  window.history.replaceState({}, '', url.toString());
+}
+
+function boot(){
+  const action = currentAction();
+  if(action === 'submit'){
+    renderForm('submit');
+  }else if(action === 'secure'){
+    renderForm('secure');
+  }else{
+    renderSwipeScreen();
+  }
+  setupLeaderboard();
+}
+
+document.getElementById('btn-submit').addEventListener('click', (e)=>{
+  e.preventDefault();
+  window.location.href = STRIPE_SUBMIT_LINK;
+});
+document.getElementById('btn-secure').addEventListener('click', (e)=>{
+  e.preventDefault();
+  window.location.href = STRIPE_SECURE_LINK;
+});
+
+/* ---------------- FORM SCREENS (post-payment) ---------------- */
+function renderForm(kind){
+  const isSecure = kind === 'secure';
+  mainEl.innerHTML = `
+    <div id="form-screen" class="${isSecure ? 'secure' : ''}">
+      <div class="form-icon">${isSecure ? '&#128081;' : '&#9997;&#65039;'}</div>
+      <h1 class="serif">${isSecure ? 'Secure Your Law' : 'Submit Your Law'}</h1>
+      <p class="desc">${isSecure
+        ? 'Payment received. Write your law below &mdash; it goes straight into the Plutocrat&rsquo;s Constitution, marked &ldquo;secured,&rdquo; bypassing the vote entirely.'
+        : 'Payment received. Write your law below &mdash; it enters the moderation queue and, once approved, joins the swipe stack.'}</p>
+      <textarea id="law-input" maxlength="${LAW_MAX_LEN}" placeholder="e.g. Every public building must have a garden" autofocus></textarea>
+      <div class="char-count"><span id="char-count">0</span> / ${LAW_MAX_LEN}</div>
+      <button class="submit-btn" id="form-submit-btn">${isSecure ? 'Secure This Law' : 'Submit for Approval'}</button>
+      <div class="status-msg" id="form-status"></div>
+    </div>
+  `;
+  const input = document.getElementById('law-input');
+  const countEl = document.getElementById('char-count');
+  input.addEventListener('input', ()=>{ countEl.textContent = input.value.length; });
+
+  const btn = document.getElementById('form-submit-btn');
+  const statusEl = document.getElementById('form-status');
+  btn.addEventListener('click', async ()=>{
+    const text = input.value.trim();
+    if(!text){ statusEl.textContent = 'Please write a law first.'; statusEl.classList.remove('success'); return; }
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    statusEl.textContent = '';
+    try{
+      if(isSecure){
+        const { error } = await sb.from('laws').insert({
+          text, source:'submitted', approved:true, secured:true
+        });
+        if(error) throw error;
+        statusEl.textContent = 'Secured. Your law is now in the Plutocrat’s Constitution.';
+      }else{
+        const { error } = await sb.from('submissions').insert({ text, approved:false });
+        if(error) throw error;
+        statusEl.textContent = 'Submitted. It will appear in the swipe stack once approved.';
+      }
+      statusEl.classList.add('success');
+      input.disabled = true;
+      btn.style.display = 'none';
+      statusEl.insertAdjacentHTML('afterend',
+        `<button class="continue-btn" id="form-continue">${isSecure ? 'View results' : 'Back to voting'} &rarr;</button>`);
+      document.getElementById('form-continue').addEventListener('click', ()=>{
+        clearActionParam();
+        if(isSecure){ renderResultsScreen(); } else { renderSwipeScreen(); }
+      });
+    }catch(e){
+      console.error(e);
+      statusEl.textContent = 'Something went wrong. Please try again.';
+      statusEl.classList.remove('success');
+      btn.disabled = false;
+      btn.textContent = isSecure ? 'Secure This Law' : 'Submit for Approval';
+    }
+  });
+}
+
+/* ---------------- SWIPE SCREEN ---------------- */
+let deck = [];
+let deckIndex = 0;
+let hintShown = false;
+let isSwiping = false; // guards against a fast double-swipe racing the 260ms exit animation
+
+async function renderSwipeScreen(){
+  clearActionParam();
+  mainEl.innerHTML = `
+    <div id="stage"></div>
+    <div class="btn-row">
+      <button class="round-btn pass" id="btn-pass" aria-label="Pass">&#10005;</button>
+      <button class="round-btn support" id="btn-support" aria-label="Support">&#10003;</button>
+    </div>
+    <div class="deck-progress" id="deck-progress"></div>
+  `;
+  document.getElementById('btn-pass').addEventListener('click', ()=>swipeCurrent('left'));
+  document.getElementById('btn-support').addEventListener('click', ()=>swipeCurrent('right'));
+  await loadDeck();
+}
+
+async function loadDeck(){
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '<div class="empty-deck"><p style="color:var(--gray)">Loading laws&hellip;</p></div>';
+
+  const { data, error } = await sb
+    .from('laws')
+    .select('*')
+    .eq('approved', true)
+    .eq('secured', false)
+    .order('id', { ascending:true });
+
+  if(error){
+    stage.innerHTML = '<div class="empty-deck"><h2 class="serif">Couldn’t load laws</h2><p>' + escapeHtml(error.message) + '</p></div>';
+    return;
+  }
+
+  const swiped = getSwipedIds();
+  deck = (data || []).filter(l => !swiped.has(l.id));
+  deckIndex = 0;
+  isSwiping = false;
+
+  if(deck.length === 0){
+    showEndOfDeck();
+  }else{
+    renderCard();
+  }
+}
+
+function updateProgress(){
+  const el = document.getElementById('deck-progress');
+  if(!el) return;
+  if(deck.length === 0){ el.textContent = ''; return; }
+  el.textContent = Math.min(deckIndex+1, deck.length) + ' of ' + deck.length;
+}
+
+function renderCard(){
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '';
+  if(deckIndex >= deck.length){
+    showEndOfDeck();
+    return;
+  }
+  const law = deck[deckIndex];
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="stamp pass">Pass</div>
+    <div class="stamp support">Support</div>
+    <div class="article-label">Proposed Article</div>
+    <div class="law-text serif">${escapeHtml(law.text)}</div>
+    <div class="source-tag">${escapeHtml(law.source || 'submitted')}</div>
+    ${!hintShown ? '<div class="swipe-hint">swipe to vote<span class="arrows">&larr;&nbsp;&nbsp;&rarr;</span></div>' : ''}
+  `;
+  stage.appendChild(card);
+  attachDrag(card, law.id);
+  updateProgress();
+}
+
+function attachDrag(card, lawId){
+  let startX=0, startY=0, curX=0, curY=0, dragging=false;
+  const passStamp = card.querySelector('.stamp.pass');
+  const supportStamp = card.querySelector('.stamp.support');
+
+  function onDown(x,y){
+    dragging = true;
+    startX = x; startY = y;
+    card.style.transition = 'none';
+    if(!hintShown){
+      hintShown = true;
+      const hint = card.querySelector('.swipe-hint');
+      if(hint) hint.style.display = 'none';
+    }
+  }
+  function onMove(x,y){
+    if(!dragging) return;
+    curX = x - startX;
+    curY = y - startY;
+    const rot = curX / 12;
+    card.style.transform = `translate(${curX}px, ${curY}px) rotate(${rot}deg)`;
+    const ratio = Math.min(Math.abs(curX)/120, 1);
+    if(curX > 0){ supportStamp.style.opacity = ratio; passStamp.style.opacity = 0; }
+    else{ passStamp.style.opacity = ratio; supportStamp.style.opacity = 0; }
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging = false;
+    card.style.transition = '';
+    if(Math.abs(curX) > 100){
+      finishSwipe(curX > 0 ? 'right' : 'left', card, lawId);
+    }else{
+      card.style.transform = '';
+      passStamp.style.opacity = 0;
+      supportStamp.style.opacity = 0;
+    }
+    curX = 0; curY = 0;
+  }
+
+  card.addEventListener('pointerdown', e=>{ card.setPointerCapture(e.pointerId); onDown(e.clientX, e.clientY); });
+  card.addEventListener('pointermove', e=>onMove(e.clientX, e.clientY));
+  card.addEventListener('pointerup', onUp);
+  card.addEventListener('pointercancel', onUp);
+}
+
+function swipeCurrent(direction){
+  const stage = document.getElementById('stage');
+  const card = stage.querySelector('.card');
+  if(!card || deckIndex >= deck.length) return;
+  const law = deck[deckIndex];
+  hintShown = true;
+  finishSwipe(direction, card, law.id);
+}
+
+function finishSwipe(direction, card, lawId){
+  // A fast second swipe (drag release + button tap, or two quick taps) can
+  // fire again on the same card before it's removed from the DOM 260ms
+  // later. Without this guard that double-processes the card: it counts
+  // two votes for one swipe AND skips the next card entirely (deckIndex
+  // advances twice for a single visible card).
+  if(isSwiping) return;
+  isSwiping = true;
+
+  const flyX = direction === 'right' ? 600 : -600;
+  card.style.transform = `translate(${flyX}px, -40px) rotate(${direction==='right'?18:-18}deg)`;
+  card.style.opacity = '0';
+
+  addSwipedId(lawId);
+
+  if(direction === 'right'){
+    sb.rpc('increment_free_vote', { law_id: lawId }).then(({error})=>{
+      if(error) console.error('vote error', error);
+    });
+  }
+
+  setTimeout(()=>{
+    deckIndex++;
+    isSwiping = false;
+    renderCard();
+  }, 260);
+}
+
+function showEndOfDeck(){
+  const stage = document.getElementById('stage');
+  stage.innerHTML = `
+    <div class="empty-deck">
+      <h2 class="serif">You&rsquo;ve seen every law</h2>
+      <p>See how the vote is shaping up so far.</p>
+      <button class="pill" id="btn-results" style="padding:10px 20px;font-size:13px;">View Results</button>
+    </div>
+  `;
+  document.getElementById('btn-results').addEventListener('click', renderResultsScreen);
+  updateProgress();
+}
+
+/* ---------------- LEADERBOARD (realtime, ranked by right swipes) ---------------- */
+let leaderboardChannel = null;
+
+async function refreshLeaderboard(){
+  const { data, error } = await sb
+    .from('laws')
+    .select('id, text, source, free_votes, secured')
+    .eq('approved', true)
+    .order('free_votes', { ascending:false })
+    .order('id', { ascending:true })
+    .limit(10);
+  if(error){ console.error(error); return; }
+  const list = document.getElementById('leaderboard-list');
+  if(!list) return;
+  if(!data || data.length === 0){
+    list.innerHTML = '<p style="color:var(--gray);font-size:13px;padding:12px 0;">No votes yet &mdash; be the first to swipe.</p>';
+    return;
+  }
+  list.innerHTML = data.map((l,i)=>`
+    <div class="lb-row">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-text serif">${l.secured ? crown() : ''}${escapeHtml(l.text)}</div>
+      <div class="lb-count">${l.free_votes}&nbsp;&uarr;</div>
+    </div>
+  `).join('');
+}
+
+function setupLeaderboard(){
+  refreshLeaderboard();
+  if(leaderboardChannel) return;
+  leaderboardChannel = sb.channel('laws-realtime')
+    .on('postgres_changes', { event:'*', schema:'public', table:'laws' }, ()=>{
+      refreshLeaderboard();
+    })
+    .subscribe();
+}
+
+document.getElementById('leaderboard-toggle').addEventListener('click', ()=>{
+  document.getElementById('leaderboard-drawer').classList.add('open');
+  refreshLeaderboard();
+});
+document.getElementById('leaderboard-close').addEventListener('click', ()=>{
+  document.getElementById('leaderboard-drawer').classList.remove('open');
+});
+
+/* ---------------- RESULTS SCREEN ---------------- */
+async function renderResultsScreen(){
+  mainEl.innerHTML = `<div id="results"><p style="text-align:center;color:var(--gray);">Tallying votes&hellip;</p></div>`;
+
+  const { data: allLaws, error } = await sb
+    .from('laws')
+    .select('*')
+    .eq('approved', true);
+
+  if(error){
+    mainEl.innerHTML = `<div id="results"><p>Couldn’t load results: ${escapeHtml(error.message)}</p></div>`;
+    return;
+  }
+
+  const laws = allLaws || [];
+  const unsecured = laws.filter(l => !l.secured);
+  const secured = laws.filter(l => l.secured).sort((a,b)=> a.id - b.id);
+
+  // "Ranked by right swipes" = free_votes, everywhere. Ties broken by id
+  // (insertion order) since all seeded rows share one created_at timestamp.
+  const top10 = [...laws].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, 10);
+
+  const peoples = [...unsecured].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, 10);
+
+  const remainingSlots = Math.max(0, 10 - secured.length);
+  const plutocratRanked = [...unsecured].sort((a,b)=> b.free_votes - a.free_votes || a.id - b.id).slice(0, remainingSlots);
+  const plutocrat = [...secured, ...plutocratRanked];
+
+  function rankedItem(l, i){
+    return `<li>
+      <div class="rank">${i+1}</div>
+      <div class="law-body">
+        <div class="txt serif">${l.secured ? crown() : ''}${escapeHtml(l.text)}</div>
+        <div class="meta">${l.free_votes} vote${l.free_votes===1?'':'s'}${l.secured ? '<span class="secured-tag">Secured</span>' : ''}</div>
+      </div>
+    </li>`;
+  }
+  function colItem(l){
+    return `<li>${l.secured ? crown() : ''}${escapeHtml(l.text)}${
+      l.secured
+        ? '<span class="secured-tag">Secured</span>'
+        : `<span class="vote-meta">${l.free_votes} vote${l.free_votes===1?'':'s'}</span>`
+    }</li>`;
+  }
+
+  mainEl.innerHTML = `
+    <div id="results">
+      <h1 class="serif">The Top 10 Laws</h1>
+      <div class="subtitle">Ranked by right swipes</div>
+      <ol class="ranked-list">${top10.length ? top10.map(rankedItem).join('') : '<li style="color:var(--gray);border:none;">No votes yet.</li>'}</ol>
+
+      <div class="columns-head serif">Two Constitutions</div>
+      <div class="columns-sub">One vote, one voice &mdash; or one that was bought.</div>
+      <div class="constitutions">
+        <div class="constitution-col peoples">
+          <h4>The People&rsquo;s Constitution</h4>
+          <ol>${peoples.length ? peoples.map(colItem).join('') : '<li style="color:var(--gray)">No votes yet</li>'}</ol>
+        </div>
+        <div class="constitution-col plutocrat">
+          <h4>The Plutocrat&rsquo;s Constitution</h4>
+          <ol>${plutocrat.length ? plutocrat.map(colItem).join('') : '<li style="color:var(--gray)">No laws yet</li>'}</ol>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <p>Want your law in the running?</p>
+        <div class="header-btns">
+          <a class="pill" href="${STRIPE_SUBMIT_LINK}">Propose a Law &mdash; $1</a>
+          <a class="pill gold" href="${STRIPE_SECURE_LINK}">Secure a Spot &mdash; $10</a>
+        </div>
+      </div>
+
+      <div class="reset-row">
+        <button class="link-btn" id="btn-swipe-more">&larr; Vote on more laws</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btn-swipe-more').addEventListener('click', renderSwipeScreen);
+}
+
+boot();
+
+})();
+</script>
+</body>
+</html>
