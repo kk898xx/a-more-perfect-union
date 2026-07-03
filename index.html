@@ -630,6 +630,7 @@ async function renderSwipeScreen(){
   `;
   document.getElementById('btn-pass').addEventListener('click', ()=>swipeCurrent('left'));
   document.getElementById('btn-support').addEventListener('click', ()=>swipeCurrent('right'));
+  setLeaderboardMode('top10');
   await loadDeck();
 }
 
@@ -800,20 +801,21 @@ function showEndOfDeck(){
   updateProgress();
 }
 
-/* ---------------- LEADERBOARD (realtime, ranked by right swipes) ---------------- */
+/* ---------------- LEADERBOARD (realtime) — top 10, or browse every law ---------------- */
 let leaderboardChannel = null;
+let leaderboardMode = 'top10'; // 'top10' | 'all'
 
 async function refreshLeaderboard(){
-  const { data, error } = await sb
-    .from('laws')
-    .select('id, text, source, free_votes, secured')
-    .eq('approved', true)
-    .order('free_votes', { ascending:false })
-    .order('id', { ascending:true })
-    .limit(10);
-  if(error){ console.error(error); return; }
   const list = document.getElementById('leaderboard-list');
   if(!list) return;
+
+  let query = sb.from('laws').select('id, text, source, free_votes, secured').eq('approved', true);
+  query = leaderboardMode === 'all'
+    ? query.order('id', { ascending:true })
+    : query.order('free_votes', { ascending:false }).order('id', { ascending:true }).limit(10);
+
+  const { data, error } = await query;
+  if(error){ console.error(error); return; }
   if(!data || data.length === 0){
     list.innerHTML = '<p style="color:var(--gray);font-size:13px;padding:12px 0;">No votes yet &mdash; be the first to swipe.</p>';
     return;
@@ -825,6 +827,20 @@ async function refreshLeaderboard(){
       <div class="lb-count">${l.free_votes}&nbsp;&uarr;</div>
     </div>
   `).join('');
+}
+
+function setLeaderboardMode(mode){
+  leaderboardMode = mode;
+  const toggleBtn = document.getElementById('leaderboard-toggle');
+  const heading = document.querySelector('#leaderboard-drawer .drawer-head h3');
+  if(mode === 'all'){
+    toggleBtn.textContent = 'Browse All Laws';
+    heading.textContent = 'All Proposed Laws';
+  }else{
+    toggleBtn.textContent = 'The Living Constitution';
+    heading.textContent = 'Top 10 Right Now';
+  }
+  refreshLeaderboard();
 }
 
 function setupLeaderboard(){
@@ -848,6 +864,7 @@ document.getElementById('leaderboard-close').addEventListener('click', ()=>{
 /* ---------------- RESULTS SCREEN ---------------- */
 async function renderResultsScreen(){
   mainEl.innerHTML = `<div id="results"><p style="text-align:center;color:var(--gray);">Tallying votes&hellip;</p></div>`;
+  setLeaderboardMode('all');
 
   const { data: allLaws, error } = await sb
     .from('laws')
